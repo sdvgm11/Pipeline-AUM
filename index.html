@@ -19,10 +19,57 @@
 .preview-page .card,.preview-page .panel{background:#fff;color:#17202c;border-color:#d9e0e8;box-shadow:none}.preview-page .label,.preview-page .sub,.preview-page .muted{color:#657184}
 .preview-page .bar{background:#edf1f5;border-color:#dce2e8}.preview-page th{position:static;background:#eef2f6;color:#17202c}.preview-page td{border-color:#e5e9ef}.preview-page .tablewrap{border-color:#d9e0e8}
 @media(max-width:800px){.effect-grid{grid-template-columns:1fr}}@media(max-width:1050px){.cards{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.formgrid{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.official-logo{width:135px}header{align-items:flex-start;flex-direction:column}main{padding:12px}.cards,.filters,.formgrid{grid-template-columns:1fr}.span2{grid-column:auto}.barrow{grid-template-columns:100px 1fr 75px}}@media print{body{background:#fff;color:#111}header,.no-print,.modal{display:none!important}main{max-width:none;padding:0}.card,.panel{box-shadow:none;background:#fff;border:1px solid #ccd2da;color:#111}.label,.sub,.muted{color:#586270}.cards{grid-template-columns:repeat(5,1fr)}.two{grid-template-columns:1fr 1fr}.tablewrap{overflow:visible}table{min-width:0;font-size:9px}th{position:static;background:#eef2f5;color:#111}td,th{padding:5px}.pill{background:#f2f4f7;border-color:#dce1e7}.fill{background:#4c7c79!important}.report{display:block;margin-bottom:14px}.screen-title{display:none}}
+
+.auth-overlay{
+  position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#070b12,#0b1220 55%,#08151a);padding:20px
+}
+.auth-card{
+  width:min(420px,100%);background:linear-gradient(180deg,#121c2c,#0d1420);
+  border:1px solid #233149;border-radius:20px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.35)
+}
+.auth-logo{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.auth-logo .mark{flex:0 0 auto}
+.auth-title{margin:0;font-size:22px}
+.auth-sub{color:#98a6ba;font-size:13px;margin:5px 0 18px;line-height:1.45}
+.auth-card input{
+  width:100%;background:#09111d;border:1px solid #233149;color:#f4f7fb;
+  padding:12px;border-radius:10px;font-size:16px;outline:none
+}
+.auth-card input:focus{border-color:#3bd6c6}
+.auth-actions{display:flex;gap:8px;margin-top:12px}
+.auth-actions .btn{flex:1}
+.auth-error{color:#ff8a94;font-size:12px;min-height:18px;margin-top:8px}
+.lock-btn{border:1px solid #233149;background:#111a29;color:#f4f7fb;padding:10px 13px;border-radius:10px;cursor:pointer;font-weight:700}
+
 </style>
 </head>
 <body>
-<header><div class="brand"><img class="official-logo" src="https://exante.eu/static/i/dest/website/components/logos/flat_horizontal.svg" alt="EXANTE"><div><h1>Pipeline & AUM Projection</h1><p>Captación de clientes y fondos</p></div></div><div class="actions no-print"><button class="btn" onclick="showView('opportunities')">Ver oportunidades</button><button class="btn" onclick="openReportPreview()">Vista previa reporte</button><button class="btn" onclick="exportCSV()">Exportar CSV</button><button class="btn danger" onclick="resetData()">Reset Data</button><button class="btn primary" onclick="openModal()">+ Nueva oportunidad</button></div></header>
+
+<div id="authOverlay" class="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="mark">X</div>
+      <div>
+        <h2 class="auth-title">Pipeline & AUM</h2>
+        <div class="auth-sub" id="authMessage">Acceso privado</div>
+      </div>
+    </div>
+    <div id="setupBox" style="display:none">
+      <div class="auth-sub">Primera vez: crea una contraseña de al menos 8 caracteres. Puede incluir letras, números y símbolos. Quedará guardada solo en este navegador.</div>
+      <input id="newPin" type="password" minlength="8" maxlength="64" placeholder="Crear contraseña">
+      <input id="confirmPin" type="password" minlength="8" maxlength="64" placeholder="Confirmar contraseña" style="margin-top:8px">
+      <div class="auth-actions"><button class="btn primary" id="savePinBtn">Crear PIN</button></div>
+    </div>
+    <div id="loginBox" style="display:none">
+      <input id="loginPin" type="password" maxlength="64" placeholder="Introduce tu contraseña">
+      <div class="auth-actions"><button class="btn primary" id="loginBtn">Entrar</button></div>
+    </div>
+    <div id="authError" class="auth-error"></div>
+  </div>
+</div>
+
+<header><div class="brand"><img class="official-logo" src="https://exante.eu/static/i/dest/website/components/logos/flat_horizontal.svg" alt="EXANTE"><div><h1>Pipeline & AUM Projection</h1><p>Captación de clientes y fondos</p></div></div><div class="actions no-print"><button class="btn" onclick="showView('opportunities')">Ver oportunidades</button><button class="btn" onclick="openReportPreview()">Vista previa reporte</button><button class="btn" onclick="exportCSV()">Exportar CSV</button><button class="btn danger" onclick="resetData()">Reset Data</button><button class="lock-btn" id="logoutBtn">🔒 Cerrar sesión</button><button class="btn primary" onclick="openModal()">+ Nueva oportunidad</button></div></header>
 <main>
 <div class="viewbar no-print">
   <button id="navDashboard" class="btn viewbtn active" onclick="showView('dashboard')">Dashboard</button>
@@ -124,6 +171,60 @@ function resetData(){
 }
 
 function exportCSV(){const d=visible(),cols=["Cliente","Relacion","Segmento","Tipo","Pais","Fondos_USD","Probabilidad","AUM_Ponderado","Liquidez","Fecha_Deposito","Permanencia","Etapa","Cuellos_Botella","Condiciones","Comentario"];const q=v=>'"'+String(v??"").replaceAll('"','""')+'"';const lines=[cols.join(",")].concat(d.map(x=>[x.client,x.relation,x.segment,x.type,x.country,x.amount,x.probability,x.amount*x.probability/100,x.liquidity,x.depositDate,x.holding,x.stage,x.bottlenecks,x.conditions,x.comment].map(q).join(",")));const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="pipeline_exante.csv";a.click();URL.revokeObjectURL(a.href)}
+
+const AUTH_PIN_KEY="pipeline_aum_pin_hash_v1";
+const AUTH_SESSION_KEY="pipeline_aum_session_v1";
+
+async function hashPin(pin){
+  const data=new TextEncoder().encode(pin);
+  const digest=await crypto.subtle.digest("SHA-256",data);
+  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+function validPin(pin){return typeof pin==="string" && pin.length>=8 && pin.length<=64}
+function showAuth(){
+  const hasPin=!!localStorage.getItem(AUTH_PIN_KEY);
+  authOverlay.style.display="flex";
+  setupBox.style.display=hasPin?"none":"block";
+  loginBox.style.display=hasPin?"block":"none";
+  authMessage.textContent=hasPin?"Introduce tu contraseña para entrar":"Configura tu acceso privado";
+  authError.textContent="";
+  setTimeout(()=>{(hasPin?loginPin:newPin).focus()},50);
+}
+function unlockApp(){
+  sessionStorage.setItem(AUTH_SESSION_KEY,"1");
+  authOverlay.style.display="none";
+}
+async function setupPin(){
+  const a=newPin.value.trim(),b=confirmPin.value.trim();
+  if(!validPin(a)){authError.textContent="La contraseña debe tener entre 8 y 64 caracteres.";return}
+  if(a!==b){authError.textContent="Las contraseñas no coinciden.";return}
+  localStorage.setItem(AUTH_PIN_KEY,await hashPin(a));
+  newPin.value="";confirmPin.value="";
+  unlockApp();
+}
+async function loginWithPin(){
+  const pin=loginPin.value.trim();
+  if(!validPin(pin)){authError.textContent="Introduce una contraseña válida.";return}
+  const ok=(await hashPin(pin))===localStorage.getItem(AUTH_PIN_KEY);
+  if(!ok){authError.textContent="Contraseña incorrecta.";loginPin.value="";loginPin.focus();return}
+  loginPin.value="";
+  unlockApp();
+}
+function logoutApp(){
+  sessionStorage.removeItem(AUTH_SESSION_KEY);
+  showAuth();
+}
+function initAuth(){
+  if(sessionStorage.getItem(AUTH_SESSION_KEY)==="1"){authOverlay.style.display="none"}else{showAuth()}
+  savePinBtn.addEventListener("click",setupPin);
+  loginBtn.addEventListener("click",loginWithPin);
+  logoutBtn.addEventListener("click",logoutApp);
+  newPin.addEventListener("keydown",e=>{if(e.key==="Enter")setupPin()});
+  confirmPin.addEventListener("keydown",e=>{if(e.key==="Enter")setupPin()});
+  loginPin.addEventListener("keydown",e=>{if(e.key==="Enter")loginWithPin()});
+}
+
 fillSelect("type",TYPES);fillSelect("country",COUNTRIES);fillSelect("fType",TYPES,"Todos");render();
+initAuth();
 </script>
 </body></html>

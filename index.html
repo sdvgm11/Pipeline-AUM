@@ -42,9 +42,14 @@
 .auth-error{color:#ff8a94;font-size:12px;min-height:18px;margin-top:8px}
 .lock-btn{border:1px solid #233149;background:#111a29;color:#f4f7fb;padding:10px 13px;border-radius:10px;cursor:pointer;font-weight:700}
 
+
+.sync-status{font-size:11px;color:var(--muted);margin-left:6px}
+.auth-card input{margin-bottom:0}
+.auth-card .btn[disabled]{opacity:.6;cursor:not-allowed}
 </style>
 </head>
 <body>
+
 
 <div id="authOverlay" class="auth-overlay">
   <div class="auth-card">
@@ -52,24 +57,18 @@
       <div class="mark">X</div>
       <div>
         <h2 class="auth-title">Pipeline & AUM</h2>
-        <div class="auth-sub" id="authMessage">Acceso privado</div>
+        <div class="auth-sub" id="authMessage">Acceso multiusuario</div>
       </div>
     </div>
-    <div id="setupBox" style="display:none">
-      <div class="auth-sub">Primera vez: crea una contraseña de al menos 8 caracteres. Puede incluir letras, números y símbolos. Quedará guardada solo en este navegador.</div>
-      <input id="newPin" type="password" minlength="8" maxlength="64" placeholder="Crear contraseña">
-      <input id="confirmPin" type="password" minlength="8" maxlength="64" placeholder="Confirmar contraseña" style="margin-top:8px">
-      <div class="auth-actions"><button class="btn primary" id="savePinBtn">Crear PIN</button></div>
-    </div>
-    <div id="loginBox" style="display:none">
-      <input id="loginPin" type="password" maxlength="64" placeholder="Introduce tu contraseña">
-      <div class="auth-actions"><button class="btn primary" id="loginBtn">Entrar</button></div>
-    </div>
+    <div class="auth-sub">Ingresa con el correo y la contraseña creados por el administrador.</div>
+    <input id="loginEmail" type="email" autocomplete="username" placeholder="Correo electrónico">
+    <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Contraseña" style="margin-top:8px">
+    <div class="auth-actions"><button class="btn primary" id="loginBtn">Entrar</button></div>
     <div id="authError" class="auth-error"></div>
   </div>
 </div>
 
-<header><div class="brand"><img class="official-logo" src="https://exante.eu/static/i/dest/website/components/logos/flat_horizontal.svg" alt="EXANTE"><div><h1>Pipeline & AUM Projection</h1><p>Captación de clientes y fondos</p></div></div><div class="actions no-print"><button class="btn" onclick="showView('opportunities')">Ver oportunidades</button><button class="btn" onclick="openReportPreview()">Vista previa reporte</button><button class="btn" onclick="exportCSV()">Exportar CSV</button><button class="btn danger" onclick="resetData()">Reset Data</button><button class="lock-btn" id="logoutBtn">🔒 Cerrar sesión</button><button class="btn primary" onclick="openModal()">+ Nueva oportunidad</button></div></header>
+<header><div class="brand"><img class="official-logo" src="https://exante.eu/static/i/dest/website/components/logos/flat_horizontal.svg" alt="EXANTE"><div><h1>Pipeline & AUM Projection</h1><p>Captación de clientes y fondos</p></div></div><div class="actions no-print"><button class="btn" onclick="showView('opportunities')">Ver oportunidades</button><button class="btn" onclick="openReportPreview()">Vista previa reporte</button><button class="btn" onclick="exportCSV()">Exportar CSV</button><button class="btn danger" onclick="resetData()">Reset Data</button><span class="pill" id="userBadge">Sin sesión</span><button class="lock-btn" id="logoutBtn">🔒 Cerrar sesión</button><button class="btn primary" onclick="openModal()">+ Nueva oportunidad</button></div></header>
 <main>
 <div class="viewbar no-print">
   <button id="navDashboard" class="btn viewbtn active" onclick="showView('dashboard')">Dashboard</button>
@@ -105,40 +104,107 @@
 </div>
 <div class="modal" id="modal"><div class="dialog"><div class="dialog-head"><div><h2 id="modalTitle" style="margin:0">Nueva oportunidad</h2><div class="muted small">Todos los campos pueden editarse después.</div></div><button class="btn" onclick="closeModal()">Cerrar</button></div><form id="oppForm" onsubmit="saveOpp(event)"><input type="hidden" id="editId"><div class="formgrid"><div class="field span2"><label>Nombre del cliente *</label><input id="client" required></div><div class="field"><label>Relación *</label><select id="relation" required><option>Nuevo</option><option>Existente</option></select></div><div class="field"><label>Segmento *</label><select id="segment" required><option>Institucional</option><option>Retail</option></select></div><div class="field"><label>Tipo de cliente *</label><select id="type" required></select></div><div class="field"><label>País *</label><select id="country" required></select></div><div class="field"><label>Fondos posibles (USD) *</label><input id="amount" type="number" min="0" step="1000" required></div><div class="field"><label>Probabilidad de cierre % *</label><input id="probability" type="number" min="0" max="100" value="50" required></div><div class="field"><label>Liquidez *</label><select id="liquidity" required><option>Líquido</option><option>No líquido</option><option>Mixto</option></select></div><div class="field"><label>Posible fecha de depósito *</label><input id="depositDate" type="date" required></div><div class="field"><label>Tiempo estimado de permanencia</label><input id="holding" placeholder="Ej. 12 meses / indefinido"></div><div class="field"><label>Etapa</label><select id="stage"><option>Prospecto</option><option>Contactado</option><option>Reunión</option><option>Propuesta</option><option>Onboarding / KYC</option><option>Funding</option><option>Cerrado</option></select></div><div class="field span2"><label>Posibles cuellos de botella</label><textarea id="bottlenecks" placeholder="Ej. KYC, documentación, pricing, custodia, transferencia bancaria, aprobación interna..."></textarea></div><div class="field span2"><label>Condiciones para que se dé</label><textarea id="conditions" placeholder="Ej. aprobación del comité, completar onboarding, transferencia de cartera..."></textarea></div><div class="field span4"><label>Comentario</label><textarea id="comment"></textarea></div></div><div class="actions" style="justify-content:flex-end;margin-top:16px"><button type="button" class="btn" onclick="closeModal()">Cancelar</button><button class="btn primary" type="submit">Guardar oportunidad</button></div></form></div></div>
 <script>
+const SUPABASE_URL="https://vjexgxewwvxwbozdwynh.supabase.co";
+const SUPABASE_KEY="sb_publishable_slwkSDOIq8OkmpsQkS3hmA_YThg-VIp";
+const SESSION_KEY="pipeline_supabase_session_v1";
+
 const TYPES=["Banco","Asset Manager","Retail","Casa de Bolsa","Family Office","Fondo de Inversión","Corporate / Treasury","Fintech","Otro"];
 const FALLBACK_COUNTRIES=["Panamá","Venezuela","Colombia","México","Brasil","Argentina","Chile","Perú","Ecuador","Costa Rica","Guatemala","República Dominicana","Puerto Rico","Estados Unidos","Canadá","España","Portugal","Reino Unido","Suiza","Luxemburgo","Malta","Chipre","Hong Kong","Singapur","Emiratos Árabes Unidos","Otro"];
-let data=JSON.parse(localStorage.getItem("exante_pipeline_v1")||"[]");
-function countries(){try{const names=new Intl.DisplayNames(['es'],{type:'region'});const codes=[];for(let a=65;a<=90;a++)for(let b=65;b<=90;b++){let c=String.fromCharCode(a,b);try{let n=names.of(c);if(n&&n!==c)codes.push(n)}catch(e){}}return [...new Set(codes)].sort((a,b)=>a.localeCompare(b,'es'))}catch(e){return FALLBACK_COUNTRIES}}
-const COUNTRIES=countries();function fillSelect(id,arr,first){const el=document.getElementById(id);if(!el)return;el.innerHTML=(first?`<option value="">${first}</option>`:"")+arr.map(x=>`<option>${esc(x)}</option>`).join("")}
-function esc(v=""){return String(v).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}function money(n){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(Number(n)||0)}
-function visible(){const from=fFrom.value,to=fTo.value,rel=fRelation.value,typ=fType.value,country=fCountry.value,liq=fLiquidity.value;return data.filter(x=>(!from||x.depositDate>=from)&&(!to||x.depositDate<=to)&&(!rel||x.relation===rel)&&(!typ||x.type===typ)&&(!country||x.country===country)&&(!liq||x.liquidity===liq))}
+
+let data=[];
+let session=null;
+let currentUser=null;
+let currentProfile=null;
+
+function countries(){
+  try{
+    const names=new Intl.DisplayNames(['es'],{type:'region'});
+    const codes=[];
+    for(let a=65;a<=90;a++)for(let b=65;b<=90;b++){
+      let c=String.fromCharCode(a,b);
+      try{let n=names.of(c);if(n&&n!==c)codes.push(n)}catch(e){}
+    }
+    return [...new Set(codes)].sort((a,b)=>a.localeCompare(b,'es'));
+  }catch(e){return FALLBACK_COUNTRIES}
+}
+const COUNTRIES=countries();
+
+function fillSelect(id,arr,first){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML=(first?`<option value="">${first}</option>`:"")+arr.map(x=>`<option>${esc(x)}</option>`).join("");
+}
+function esc(v=""){return String(v).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function money(n){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(Number(n)||0)}
 function showView(view){
   dashboardView.classList.toggle("active",view==="dashboard");
   opportunitiesView.classList.toggle("active",view==="opportunities");
   navDashboard.classList.toggle("active",view==="dashboard");
   navOpportunities.classList.toggle("active",view==="opportunities");
 }
+function visible(){
+  const from=fFrom.value,to=fTo.value,rel=fRelation.value,typ=fType.value,country=fCountry.value,liq=fLiquidity.value;
+  return data.filter(x=>(!from||x.depositDate>=from)&&(!to||x.depositDate<=to)&&(!rel||x.relation===rel)&&(!typ||x.type===typ)&&(!country||x.country===country)&&(!liq||x.liquidity===liq));
+}
 function probabilityGroups(d){
-  const g={Alta:0,Media:0,Baja:0}; d.forEach(x=>{const p=Number(x.probability||0),w=Number(x.amount||0)*p/100;if(p>=70)g.Alta+=w;else if(p>=40)g.Media+=w;else g.Baja+=w}); return g;
+  const g={Alta:0,Media:0,Baja:0};
+  d.forEach(x=>{const p=Number(x.probability||0),w=Number(x.amount||0)*p/100;if(p>=70)g.Alta+=w;else if(p>=40)g.Media+=w;else g.Baja+=w});
+  return g;
 }
 function stageGroups(d){const o={};d.forEach(x=>o[x.stage||"Sin etapa"]=(o[x.stage||"Sin etapa"]||0)+1);return o}
 function effectivenessChart(id,obj){
-  const el=document.getElementById(id),entries=Object.entries(obj); if(!entries.length){el.innerHTML='<div class="empty">Sin datos</div>';return}
+  const el=document.getElementById(id),entries=Object.entries(obj);
+  if(!entries.length){el.innerHTML='<div class="empty">Sin datos</div>';return}
   const max=Math.max(...entries.map(x=>x[1]),1);
   el.innerHTML=entries.map(([k,v])=>{const cls=k==="Alta"?"green":k==="Media"?"yellow":k==="Baja"?"red":"";return `<div class="barrow"><div>${esc(k)}</div><div class="bar"><div class="fill ${cls}" style="width:${v/max*100}%"></div></div><div class="money">${money(v)}</div></div>`}).join("");
 }
 function countStageChart(id,obj){
-  const el=document.getElementById(id),entries=Object.entries(obj);if(!entries.length){el.innerHTML='<div class="empty">Sin datos</div>';return}
+  const el=document.getElementById(id),entries=Object.entries(obj);
+  if(!entries.length){el.innerHTML='<div class="empty">Sin datos</div>';return}
   const max=Math.max(...entries.map(x=>x[1]),1);
   el.innerHTML=entries.map(([k,v])=>`<div class="barrow"><div>${esc(k)}</div><div class="bar"><div class="fill" style="width:${v/max*100}%"></div></div><div class="money">${v}</div></div>`).join("");
 }
+function groupMonth(d){const o={};d.forEach(x=>{let k=(x.depositDate||"Sin fecha").slice(0,7);o[k]=(o[k]||0)+x.amount*x.probability/100});return o}
+function groupType(d){const o={};d.forEach(x=>o[x.type]=(o[x.type]||0)+x.amount*x.probability/100);return o}
+function chart(id,obj){
+  const el=document.getElementById(id),entries=Object.entries(obj).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length){el.innerHTML='<div class="empty">Sin datos</div>';return}
+  const max=Math.max(...entries.map(x=>x[1]),1);
+  el.innerHTML=entries.slice(0,8).map(([k,v])=>`<div class="barrow"><div>${esc(k)}</div><div class="bar"><div class="fill" style="width:${v/max*100}%"></div></div><div class="money">${money(v)}</div></div>`).join("");
+}
+
+function render(){
+  const d=visible(),gross=d.reduce((s,x)=>s+Number(x.amount||0),0),weighted=d.reduce((s,x)=>s+Number(x.amount||0)*Number(x.probability||0)/100,0);
+  const conf=d.filter(x=>Number(x.probability)===100).reduce((s,x)=>s+Number(x.amount||0),0);
+  const avg=d.length?d.reduce((s,x)=>s+Number(x.probability||0),0)/d.length:0;
+  mGross.textContent=money(gross);mWeighted.textContent=money(weighted);mConfirmed.textContent=money(conf);mCount.textContent=d.length;mProb.textContent=Math.round(avg)+"%";
+  mSplit.textContent=`${d.filter(x=>x.relation==="Nuevo").length} nuevos · ${d.filter(x=>x.relation==="Existente").length} existentes`;
+
+  rows.innerHTML=d.length?d.slice().sort((a,b)=>(a.depositDate||"").localeCompare(b.depositDate||"")).map(x=>`<tr>
+    <td><strong>${esc(x.client)}</strong><div class="muted small">${esc(x.stage||"")}</div></td>
+    <td><span class="pill">${esc(x.relation)}</span></td>
+    <td>${esc(x.type)}<div class="muted small">${esc(x.segment||"")}</div></td>
+    <td>${esc(x.country)}</td>
+    <td class="money">${money(x.amount)}</td><td class="prob">${x.probability}%</td>
+    <td class="money"><strong>${money(x.amount*x.probability/100)}</strong></td>
+    <td>${esc(x.liquidity)}</td><td>${esc(x.depositDate||"—")}</td><td>${esc(x.holding||"—")}</td>
+    <td>${esc(x.bottlenecks||x.conditions||"—")}</td><td>${esc(x.comment||"—")}</td>
+    <td class="no-print"><button class="btn" onclick="editOpp('${x.id}')">Editar</button> <button class="btn danger" onclick="delOpp('${x.id}')">Eliminar</button></td>
+  </tr>`).join(""):`<tr><td colspan="13" class="empty">No hay oportunidades con estos filtros.</td></tr>`;
+
+  chart("monthChart",groupMonth(d));chart("typeChart",groupType(d));
+  reportMeta.textContent=`Generado: ${new Date().toLocaleString('es')} · Rango: ${fFrom.value||"inicio"} a ${fTo.value||"sin límite"} · ${d.length} oportunidades`;
+  const high=d.filter(x=>Number(x.probability)>=70).length,mid=d.filter(x=>Number(x.probability)>=40&&Number(x.probability)<70).length,low=d.filter(x=>Number(x.probability)<40).length;
+  effHigh.textContent=high;effMid.textContent=mid;effLow.textContent=low;
+  effectivenessChart("effectChart",probabilityGroups(d));countStageChart("stageChart",stageGroups(d));refreshFilterCountries();
+}
+
 function buildReportHTML(){
   const d=visible(),gross=d.reduce((s,x)=>s+Number(x.amount||0),0),weighted=d.reduce((s,x)=>s+Number(x.amount||0)*Number(x.probability||0)/100,0);
   const avg=d.length?d.reduce((s,x)=>s+Number(x.probability||0),0)/d.length:0;
   const pg=probabilityGroups(d), sg=stageGroups(d);
-  const rowsHtml=d.length?d.slice().sort((a,b)=>a.depositDate.localeCompare(b.depositDate)).map(x=>`<tr><td><strong>${esc(x.client)}</strong><div class="muted small">${esc(x.stage||"")}</div></td><td>${esc(x.relation)}</td><td>${esc(x.type)}</td><td>${esc(x.country)}</td><td class="money">${money(x.amount)}</td><td>${x.probability}%</td><td class="money">${money(x.amount*x.probability/100)}</td><td>${esc(x.depositDate)}</td><td>${esc(x.bottlenecks||x.conditions||"—")}</td></tr>`).join(""):`<tr><td colspan="9" class="empty">Sin oportunidades.</td></tr>`;
+  const rowsHtml=d.length?d.slice().sort((a,b)=>(a.depositDate||"").localeCompare(b.depositDate||"")).map(x=>`<tr><td><strong>${esc(x.client)}</strong><div class="muted small">${esc(x.stage||"")}</div></td><td>${esc(x.relation)}</td><td>${esc(x.type)}</td><td>${esc(x.country)}</td><td class="money">${money(x.amount)}</td><td>${x.probability}%</td><td class="money">${money(x.amount*x.probability/100)}</td><td>${esc(x.depositDate||"—")}</td><td>${esc(x.bottlenecks||x.conditions||"—")}</td></tr>`).join(""):`<tr><td colspan="9" class="empty">Sin oportunidades.</td></tr>`;
   const chartHTML=(obj,type)=>{const entries=Object.entries(obj),max=Math.max(...entries.map(x=>x[1]),1);return entries.map(([k,v])=>{const cls=type==="prob"?(k==="Alta"?"green":k==="Media"?"yellow":"red"):"";return `<div class="barrow"><div>${esc(k)}</div><div class="bar"><div class="fill ${cls}" style="width:${v/max*100}%"></div></div><div class="money">${type==="prob"?money(v):v}</div></div>`}).join("")||'<div class="empty">Sin datos</div>'};
-  return `<div class="preview-head"><div><img src="https://exante.eu/static/i/dest/website/components/logos/flat_horizontal.svg" alt="EXANTE"><h1>Reporte de Pipeline y Proyección de AUM</h1><div class="muted">${new Date().toLocaleString('es')} · ${d.length} oportunidades</div></div><div style="text-align:right"><strong>Rango</strong><br>${esc(fFrom.value||"Inicio")} — ${esc(fTo.value||"Sin límite")}</div></div>
+  return `<div class="preview-head"><div><img src="https://exante.eu/static/i/dest/website/components/logos/flat_horizontal.svg" alt="EXANTE"><h1>Reporte de Pipeline y Proyección de AUM</h1><div class="muted">${new Date().toLocaleString('es')} · ${d.length} oportunidades</div></div><div style="text-align:right"><strong>Usuario</strong><br>${esc(currentUser?.email||"")}</div></div>
   <section class="grid cards"><div class="card"><div class="label">Pipeline bruto</div><div class="metric">${money(gross)}</div></div><div class="card"><div class="label">AUM ponderado</div><div class="metric">${money(weighted)}</div></div><div class="card"><div class="label">Prob. media</div><div class="metric">${Math.round(avg)}%</div></div><div class="card"><div class="label">Nuevos</div><div class="metric">${d.filter(x=>x.relation==="Nuevo").length}</div></div><div class="card"><div class="label">Existentes</div><div class="metric">${d.filter(x=>x.relation==="Existente").length}</div></div></section>
   <section class="grid two"><div class="panel"><h2>Efectividad por probabilidad</h2>${chartHTML(pg,"prob")}</div><div class="panel"><h2>Oportunidades por etapa</h2>${chartHTML(sg,"stage")}</div></section>
   <section class="panel"><h2>Detalle de oportunidades</h2><div class="tablewrap"><table style="min-width:900px"><thead><tr><th>Cliente</th><th>Relación</th><th>Tipo</th><th>País</th><th>Fondos</th><th>Prob.</th><th>AUM pond.</th><th>Fecha</th><th>Cuello / condición</th></tr></thead><tbody>${rowsHtml}</tbody></table></div></section>`;
@@ -147,84 +213,227 @@ function openReportPreview(){render();previewPage.innerHTML=buildReportHTML();re
 function closeReportPreview(){reportPreview.classList.remove("show")}
 function printPreview(){window.print()}
 
-function render(){const d=visible(),gross=d.reduce((s,x)=>s+Number(x.amount||0),0),weighted=d.reduce((s,x)=>s+Number(x.amount||0)*Number(x.probability||0)/100,0);const conf=d.filter(x=>Number(x.probability)===100).reduce((s,x)=>s+Number(x.amount||0),0);const avg=d.length?d.reduce((s,x)=>s+Number(x.probability||0),0)/d.length:0;mGross.textContent=money(gross);mWeighted.textContent=money(weighted);mConfirmed.textContent=money(conf);mCount.textContent=d.length;mProb.textContent=Math.round(avg)+"%";mSplit.textContent=`${d.filter(x=>x.relation==="Nuevo").length} nuevos · ${d.filter(x=>x.relation==="Existente").length} existentes`;rows.innerHTML=d.length?d.sort((a,b)=>a.depositDate.localeCompare(b.depositDate)).map(x=>`<tr><td><strong>${esc(x.client)}</strong><div class="muted small">${esc(x.stage||"")}</div></td><td><span class="pill">${esc(x.relation)}</span></td><td>${esc(x.type)}<div class="muted small">${esc(x.segment||"")}</div></td><td>${esc(x.country)}</td><td class="money">${money(x.amount)}</td><td class="prob">${x.probability}%</td><td class="money"><strong>${money(x.amount*x.probability/100)}</strong></td><td>${esc(x.liquidity)}</td><td>${esc(x.depositDate)}</td><td>${esc(x.holding||"—")}</td><td>${esc(x.bottlenecks||x.conditions||"—")}</td><td>${esc(x.comment||"—")}</td><td class="no-print"><button class="btn" onclick="editOpp('${x.id}')">Editar</button> <button class="btn danger" onclick="delOpp('${x.id}')">Eliminar</button></td></tr>`).join(""):`<tr><td colspan="13" class="empty">No hay oportunidades con estos filtros.</td></tr>`;chart("monthChart",groupMonth(d));chart("typeChart",groupType(d));reportMeta.textContent=`Generado: ${new Date().toLocaleString('es')} · Rango: ${fFrom.value||"inicio"} a ${fTo.value||"sin límite"} · ${d.length} oportunidades`;
-const high=d.filter(x=>Number(x.probability)>=70).length,mid=d.filter(x=>Number(x.probability)>=40&&Number(x.probability)<70).length,low=d.filter(x=>Number(x.probability)<40).length;
-effHigh.textContent=high;effMid.textContent=mid;effLow.textContent=low;effectivenessChart("effectChart",probabilityGroups(d));countStageChart("stageChart",stageGroups(d));refreshFilterCountries()}
-function groupMonth(d){const o={};d.forEach(x=>{let k=(x.depositDate||"Sin fecha").slice(0,7);o[k]=(o[k]||0)+x.amount*x.probability/100});return o}function groupType(d){const o={};d.forEach(x=>o[x.type]=(o[x.type]||0)+x.amount*x.probability/100);return o}
-function chart(id,obj){const el=document.getElementById(id),entries=Object.entries(obj).sort((a,b)=>b[1]-a[1]);if(!entries.length){el.innerHTML='<div class="empty">Sin datos</div>';return}const max=Math.max(...entries.map(x=>x[1]),1);el.innerHTML=entries.slice(0,8).map(([k,v])=>`<div class="barrow"><div>${esc(k)}</div><div class="bar"><div class="fill" style="width:${v/max*100}%"></div></div><div class="money">${money(v)}</div></div>`).join("")}
-function openModal(){oppForm.reset();editId.value="";probability.value=50;modalTitle.textContent="Nueva oportunidad";modal.classList.add("show")}function closeModal(){modal.classList.remove("show")}
-function saveOpp(e){e.preventDefault();const id=editId.value||crypto.randomUUID();const x={id,client:client.value.trim(),relation:relation.value,segment:segment.value,type:type.value,country:country.value,amount:Number(amount.value),probability:Number(probability.value),liquidity:liquidity.value,depositDate:depositDate.value,holding:holding.value.trim(),stage:stage.value,bottlenecks:bottlenecks.value.trim(),conditions:conditions.value.trim(),comment:comment.value.trim()};const i=data.findIndex(y=>y.id===id);if(i>=0)data[i]=x;else data.push(x);persist();closeModal();render()}
-function editOpp(id){const x=data.find(y=>y.id===id);if(!x)return;openModal();modalTitle.textContent="Editar oportunidad";editId.value=id;for(const [k,v] of Object.entries(x)){const el=document.getElementById(k);if(el)el.value=v}}
-function delOpp(id){if(confirm("¿Eliminar esta oportunidad?")){data=data.filter(x=>x.id!==id);persist();render()}}function persist(){localStorage.setItem("exante_pipeline_v1",JSON.stringify(data))}
-function refreshFilterCountries(){const current=fCountry.value,used=[...new Set(data.map(x=>x.country).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));fCountry.innerHTML='<option value="">Todos</option>'+used.map(x=>`<option>${esc(x)}</option>`).join("");fCountry.value=current}
-
-function resetData(){
-  const first=confirm("Esto eliminará TODAS las oportunidades guardadas en esta app. ¿Deseas continuar?");
-  if(!first)return;
-  const second=confirm("Confirmación final: ¿borrar todos los datos del pipeline?");
-  if(!second)return;
-  data=[];
-  localStorage.removeItem("exante_pipeline_v1");
-  render();
-  showView("dashboard");
-  alert("Los datos fueron eliminados correctamente.");
+function dbToApp(r){
+  return {
+    id:r.id,
+    userId:r.user_id,
+    client:r.client_name||"",
+    relation:r.relationship||"",
+    segment:r.segment||"",
+    type:r.client_type||"",
+    country:r.country||"",
+    amount:Number(r.amount||0),
+    probability:Number(r.probability||0),
+    liquidity:r.liquidity||"",
+    depositDate:r.deposit_date||"",
+    holding:r.holding_period||"",
+    stage:r.stage||"",
+    bottlenecks:r.bottlenecks||"",
+    conditions:r.conditions||"",
+    comment:r.comments||""
+  };
+}
+function appToDb(x){
+  return {
+    user_id:currentUser.id,
+    client_name:x.client,
+    relationship:x.relation,
+    segment:x.segment,
+    client_type:x.type,
+    country:x.country,
+    amount:x.amount,
+    probability:x.probability,
+    liquidity:x.liquidity,
+    deposit_date:x.depositDate||null,
+    holding_period:x.holding||null,
+    stage:x.stage||null,
+    bottlenecks:x.bottlenecks||null,
+    conditions:x.conditions||null,
+    comments:x.comment||null
+  };
 }
 
-function exportCSV(){const d=visible(),cols=["Cliente","Relacion","Segmento","Tipo","Pais","Fondos_USD","Probabilidad","AUM_Ponderado","Liquidez","Fecha_Deposito","Permanencia","Etapa","Cuellos_Botella","Condiciones","Comentario"];const q=v=>'"'+String(v??"").replaceAll('"','""')+'"';const lines=[cols.join(",")].concat(d.map(x=>[x.client,x.relation,x.segment,x.type,x.country,x.amount,x.probability,x.amount*x.probability/100,x.liquidity,x.depositDate,x.holding,x.stage,x.bottlenecks,x.conditions,x.comment].map(q).join(",")));const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="pipeline_exante.csv";a.click();URL.revokeObjectURL(a.href)}
-
-const AUTH_PIN_KEY="pipeline_aum_pin_hash_v1";
-const AUTH_SESSION_KEY="pipeline_aum_session_v1";
-
-async function hashPin(pin){
-  const data=new TextEncoder().encode(pin);
-  const digest=await crypto.subtle.digest("SHA-256",data);
-  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
+function saveSession(s){
+  session=s;
+  if(s) localStorage.setItem(SESSION_KEY,JSON.stringify(s));
+  else localStorage.removeItem(SESSION_KEY);
 }
-function validPin(pin){return typeof pin==="string" && pin.length>=8 && pin.length<=64}
-function showAuth(){
-  const hasPin=!!localStorage.getItem(AUTH_PIN_KEY);
-  authOverlay.style.display="flex";
-  setupBox.style.display=hasPin?"none":"block";
-  loginBox.style.display=hasPin?"block":"none";
-  authMessage.textContent=hasPin?"Introduce tu contraseña para entrar":"Configura tu acceso privado";
+function loadStoredSession(){
+  try{return JSON.parse(localStorage.getItem(SESSION_KEY)||"null")}catch(e){return null}
+}
+async function authRequest(path,options={}){
+  const headers={"apikey":SUPABASE_KEY,"Content-Type":"application/json",...(options.headers||{})};
+  return fetch(SUPABASE_URL+path,{...options,headers});
+}
+async function refreshSession(){
+  if(!session?.refresh_token)return false;
+  const r=await authRequest("/auth/v1/token?grant_type=refresh_token",{method:"POST",body:JSON.stringify({refresh_token:session.refresh_token})});
+  if(!r.ok){saveSession(null);return false}
+  const s=await r.json();saveSession(s);currentUser=s.user||currentUser;return true;
+}
+async function apiFetch(path,options={},retry=true){
+  if(!session?.access_token)throw new Error("No hay sesión activa");
+  const headers={"apikey":SUPABASE_KEY,"Authorization":"Bearer "+session.access_token,"Content-Type":"application/json",...(options.headers||{})};
+  let r=await fetch(SUPABASE_URL+path,{...options,headers});
+  if(r.status===401 && retry && await refreshSession())return apiFetch(path,options,false);
+  return r;
+}
+async function validateSession(){
+  if(!session?.access_token)return false;
+  let r=await apiFetch("/auth/v1/user",{method:"GET"});
+  if(!r.ok)return false;
+  currentUser=await r.json();
+  return true;
+}
+async function loadProfile(){
+  try{
+    const r=await apiFetch("/rest/v1/profiles?select=id,email,full_name,is_admin&id=eq."+encodeURIComponent(currentUser.id),{method:"GET"});
+    if(r.ok){const rows=await r.json();currentProfile=rows[0]||null}
+  }catch(e){currentProfile=null}
+}
+async function login(){
   authError.textContent="";
-  setTimeout(()=>{(hasPin?loginPin:newPin).focus()},50);
+  const email=loginEmail.value.trim(),password=loginPassword.value;
+  if(!email||!password){authError.textContent="Ingresa correo y contraseña.";return}
+  loginBtn.disabled=true;loginBtn.textContent="Entrando...";
+  try{
+    const r=await authRequest("/auth/v1/token?grant_type=password",{method:"POST",body:JSON.stringify({email,password})});
+    const payload=await r.json();
+    if(!r.ok)throw new Error(payload.error_description||payload.msg||"Credenciales incorrectas.");
+    saveSession(payload);currentUser=payload.user;
+    await loadProfile();
+    await enterApp();
+    loginPassword.value="";
+  }catch(e){
+    authError.textContent=e.message||"No se pudo iniciar sesión.";
+  }finally{
+    loginBtn.disabled=false;loginBtn.textContent="Entrar";
+  }
 }
-function unlockApp(){
-  sessionStorage.setItem(AUTH_SESSION_KEY,"1");
+async function logoutApp(){
+  try{if(session?.access_token)await apiFetch("/auth/v1/logout",{method:"POST"})}catch(e){}
+  saveSession(null);currentUser=null;currentProfile=null;data=[];
+  render();showLogin();
+}
+function showLogin(){
+  authOverlay.style.display="flex";
+  userBadge.textContent="Sin sesión";
+  authError.textContent="";
+  setTimeout(()=>loginEmail.focus(),50);
+}
+async function enterApp(){
   authOverlay.style.display="none";
+  userBadge.textContent=(currentProfile?.is_admin?"Admin · ":"")+((currentProfile?.full_name||currentUser?.email)||"Usuario");
+  await loadOpportunities();
 }
-async function setupPin(){
-  const a=newPin.value.trim(),b=confirmPin.value.trim();
-  if(!validPin(a)){authError.textContent="La contraseña debe tener entre 8 y 64 caracteres.";return}
-  if(a!==b){authError.textContent="Las contraseñas no coinciden.";return}
-  localStorage.setItem(AUTH_PIN_KEY,await hashPin(a));
-  newPin.value="";confirmPin.value="";
-  unlockApp();
-}
-async function loginWithPin(){
-  const pin=loginPin.value.trim();
-  if(!validPin(pin)){authError.textContent="Introduce una contraseña válida.";return}
-  const ok=(await hashPin(pin))===localStorage.getItem(AUTH_PIN_KEY);
-  if(!ok){authError.textContent="Contraseña incorrecta.";loginPin.value="";loginPin.focus();return}
-  loginPin.value="";
-  unlockApp();
-}
-function logoutApp(){
-  sessionStorage.removeItem(AUTH_SESSION_KEY);
-  showAuth();
-}
-function initAuth(){
-  if(sessionStorage.getItem(AUTH_SESSION_KEY)==="1"){authOverlay.style.display="none"}else{showAuth()}
-  savePinBtn.addEventListener("click",setupPin);
-  loginBtn.addEventListener("click",loginWithPin);
-  logoutBtn.addEventListener("click",logoutApp);
-  newPin.addEventListener("keydown",e=>{if(e.key==="Enter")setupPin()});
-  confirmPin.addEventListener("keydown",e=>{if(e.key==="Enter")setupPin()});
-  loginPin.addEventListener("keydown",e=>{if(e.key==="Enter")loginWithPin()});
+async function initAuth(){
+  session=loadStoredSession();
+  if(session && await validateSession()){
+    await loadProfile();await enterApp();
+  }else{
+    saveSession(null);showLogin();
+  }
 }
 
-fillSelect("type",TYPES);fillSelect("country",COUNTRIES);fillSelect("fType",TYPES,"Todos");render();
+async function loadOpportunities(){
+  try{
+    const r=await apiFetch("/rest/v1/opportunities?select=*&order=deposit_date.asc",{method:"GET"});
+    if(!r.ok)throw new Error(await r.text());
+    const rowsDb=await r.json();
+    data=rowsDb.map(dbToApp);
+    render();
+  }catch(e){
+    console.error(e);
+    alert("No se pudieron cargar las oportunidades. Revisa la conexión o la configuración de Supabase.");
+  }
+}
+
+function openModal(){oppForm.reset();editId.value="";probability.value=50;modalTitle.textContent="Nueva oportunidad";modal.classList.add("show")}
+function closeModal(){modal.classList.remove("show")}
+
+async function saveOpp(e){
+  e.preventDefault();
+  const x={
+    id:editId.value||null,
+    client:client.value.trim(),
+    relation:relation.value,
+    segment:segment.value,
+    type:type.value,
+    country:country.value,
+    amount:Number(amount.value),
+    probability:Number(probability.value),
+    liquidity:liquidity.value,
+    depositDate:depositDate.value,
+    holding:holding.value.trim(),
+    stage:stage.value,
+    bottlenecks:bottlenecks.value.trim(),
+    conditions:conditions.value.trim(),
+    comment:comment.value.trim()
+  };
+  try{
+    if(x.id){
+      const r=await apiFetch("/rest/v1/opportunities?id=eq."+encodeURIComponent(x.id),{
+        method:"PATCH",headers:{"Prefer":"return=representation"},body:JSON.stringify(appToDb(x))
+      });
+      if(!r.ok)throw new Error(await r.text());
+    }else{
+      const r=await apiFetch("/rest/v1/opportunities",{
+        method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify(appToDb(x))
+      });
+      if(!r.ok)throw new Error(await r.text());
+    }
+    closeModal();await loadOpportunities();
+  }catch(e){
+    console.error(e);alert("No se pudo guardar la oportunidad.");
+  }
+}
+function editOpp(id){
+  const x=data.find(y=>y.id===id);if(!x)return;
+  openModal();modalTitle.textContent="Editar oportunidad";editId.value=id;
+  for(const [k,v] of Object.entries(x)){const el=document.getElementById(k);if(el)el.value=v??""}
+}
+async function delOpp(id){
+  if(!confirm("¿Eliminar esta oportunidad?"))return;
+  try{
+    const r=await apiFetch("/rest/v1/opportunities?id=eq."+encodeURIComponent(id),{method:"DELETE"});
+    if(!r.ok)throw new Error(await r.text());
+    await loadOpportunities();
+  }catch(e){console.error(e);alert("No se pudo eliminar la oportunidad.")}
+}
+async function resetData(){
+  const first=confirm("Esto eliminará TODAS TUS oportunidades guardadas. ¿Deseas continuar?");
+  if(!first)return;
+  const second=confirm("Confirmación final: ¿borrar todos TUS datos del pipeline?");
+  if(!second)return;
+  try{
+    const r=await apiFetch("/rest/v1/opportunities?user_id=eq."+encodeURIComponent(currentUser.id),{method:"DELETE"});
+    if(!r.ok)throw new Error(await r.text());
+    await loadOpportunities();showView("dashboard");alert("Tus datos fueron eliminados correctamente.");
+  }catch(e){console.error(e);alert("No se pudieron eliminar los datos.")}
+}
+function refreshFilterCountries(){
+  const current=fCountry.value,used=[...new Set(data.map(x=>x.country).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+  fCountry.innerHTML='<option value="">Todos</option>'+used.map(x=>`<option>${esc(x)}</option>`).join("");
+  fCountry.value=current;
+}
+function exportCSV(){
+  const d=visible(),cols=["Cliente","Relacion","Segmento","Tipo","Pais","Fondos_USD","Probabilidad","AUM_Ponderado","Liquidez","Fecha_Deposito","Permanencia","Etapa","Cuellos_Botella","Condiciones","Comentario"];
+  const q=v=>'"'+String(v??"").replaceAll('"','""')+'"';
+  const lines=[cols.join(",")].concat(d.map(x=>[x.client,x.relation,x.segment,x.type,x.country,x.amount,x.probability,x.amount*x.probability/100,x.liquidity,x.depositDate,x.holding,x.stage,x.bottlenecks,x.conditions,x.comment].map(q).join(",")));
+  const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="pipeline_exante.csv";a.click();URL.revokeObjectURL(a.href);
+}
+
+fillSelect("type",TYPES);
+fillSelect("country",COUNTRIES);
+fillSelect("fType",TYPES,"Todos");
+render();
+
+loginBtn.addEventListener("click",login);
+logoutBtn.addEventListener("click",logoutApp);
+loginPassword.addEventListener("keydown",e=>{if(e.key==="Enter")login()});
+loginEmail.addEventListener("keydown",e=>{if(e.key==="Enter")loginPassword.focus()});
+
 initAuth();
 </script>
 </body></html>

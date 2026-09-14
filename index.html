@@ -46,6 +46,7 @@
 .sync-status{font-size:11px;color:var(--muted);margin-left:6px}
 .auth-card input{margin-bottom:0}
 .auth-card .btn[disabled]{opacity:.6;cursor:not-allowed}
+#recoveryBox{display:none}
 </style>
 </head>
 <body>
@@ -60,10 +61,18 @@
         <div class="auth-sub" id="authMessage">Acceso multiusuario</div>
       </div>
     </div>
-    <div class="auth-sub">Ingresa con el correo y la contraseña creados por el administrador.</div>
-    <input id="loginEmail" type="email" autocomplete="username" placeholder="Correo electrónico">
-    <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Contraseña" style="margin-top:8px">
-    <div class="auth-actions"><button class="btn primary" id="loginBtn">Entrar</button></div>
+    <div id="loginBox">
+      <div class="auth-sub">Ingresa con el correo y la contraseña creados por el administrador.</div>
+      <input id="loginEmail" type="email" autocomplete="username" placeholder="Correo electrónico">
+      <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Contraseña" style="margin-top:8px">
+      <div class="auth-actions"><button class="btn primary" id="loginBtn">Entrar</button></div>
+    </div>
+    <div id="recoveryBox">
+      <div class="auth-sub">Crea una contraseña nueva para recuperar tu acceso.</div>
+      <input id="newPassword" type="password" autocomplete="new-password" placeholder="Nueva contraseña">
+      <input id="confirmPassword" type="password" autocomplete="new-password" placeholder="Repite la nueva contraseña" style="margin-top:8px">
+      <div class="auth-actions"><button class="btn primary" id="savePasswordBtn">Guardar nueva contraseña</button></div>
+    </div>
     <div id="authError" class="auth-error"></div>
   </div>
 </div>
@@ -291,6 +300,52 @@ async function loadProfile(){
     if(r.ok){const rows=await r.json();currentProfile=rows[0]||null}
   }catch(e){currentProfile=null}
 }
+
+let recoveryAccessToken=null;
+function parseAuthHash(){
+  const raw=(location.hash||'').replace(/^#/,'');
+  if(!raw)return null;
+  const p=new URLSearchParams(raw);
+  return {
+    type:p.get('type'),
+    access_token:p.get('access_token'),
+    refresh_token:p.get('refresh_token')
+  };
+}
+function showRecovery(accessToken){
+  recoveryAccessToken=accessToken;
+  authOverlay.style.display="flex";
+  loginBox.style.display="none";
+  recoveryBox.style.display="block";
+  authMessage.textContent="Recuperar contraseña";
+  authError.textContent="";
+  setTimeout(()=>newPassword.focus(),50);
+}
+async function saveRecoveredPassword(){
+  authError.textContent="";
+  const p1=newPassword.value,p2=confirmPassword.value;
+  if(!p1||p1.length<6){authError.textContent="La contraseña debe tener al menos 6 caracteres.";return}
+  if(p1!==p2){authError.textContent="Las contraseñas no coinciden.";return}
+  savePasswordBtn.disabled=true;savePasswordBtn.textContent="Guardando...";
+  try{
+    const r=await fetch(SUPABASE_URL+"/auth/v1/user",{
+      method:"PUT",
+      headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+recoveryAccessToken,"Content-Type":"application/json"},
+      body:JSON.stringify({password:p1})
+    });
+    const payload=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(payload.msg||payload.error_description||payload.message||"No se pudo cambiar la contraseña.");
+    history.replaceState(null,"",location.pathname+location.search);
+    recoveryAccessToken=null;
+    newPassword.value="";confirmPassword.value="";
+    recoveryBox.style.display="none";loginBox.style.display="block";
+    authMessage.textContent="Contraseña actualizada";
+    authError.textContent="Contraseña cambiada correctamente. Ya puedes iniciar sesión.";
+    setTimeout(()=>loginEmail.focus(),50);
+  }catch(e){authError.textContent=e.message||"No se pudo cambiar la contraseña."}
+  finally{savePasswordBtn.disabled=false;savePasswordBtn.textContent="Guardar nueva contraseña"}
+}
+
 async function login(){
   authError.textContent="";
   const email=loginEmail.value.trim(),password=loginPassword.value;
@@ -327,6 +382,11 @@ async function enterApp(){
   await loadOpportunities();
 }
 async function initAuth(){
+  const h=parseAuthHash();
+  if(h?.type==="recovery" && h.access_token){
+    showRecovery(h.access_token);
+    return;
+  }
   session=loadStoredSession();
   if(session && await validateSession()){
     await loadProfile();await enterApp();
@@ -430,9 +490,11 @@ fillSelect("fType",TYPES,"Todos");
 render();
 
 loginBtn.addEventListener("click",login);
+savePasswordBtn.addEventListener("click",saveRecoveredPassword);
 logoutBtn.addEventListener("click",logoutApp);
 loginPassword.addEventListener("keydown",e=>{if(e.key==="Enter")login()});
 loginEmail.addEventListener("keydown",e=>{if(e.key==="Enter")loginPassword.focus()});
+confirmPassword.addEventListener("keydown",e=>{if(e.key==="Enter")saveRecoveredPassword()});
 
 initAuth();
 </script>

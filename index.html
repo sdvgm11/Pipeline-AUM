@@ -226,8 +226,8 @@ function dbToApp(r){
   return {
     id:r.id,
     userId:r.user_id,
-    client:r.client||"",
-    relation:r.relation||"",
+    client:r.client_name||"",
+    relation:r.relationship||"",
     segment:r.segment||"",
     type:r.client_type||"",
     country:r.country||"",
@@ -235,18 +235,18 @@ function dbToApp(r){
     probability:Number(r.probability||0),
     liquidity:r.liquidity||"",
     depositDate:r.deposit_date||"",
-    holding:r.holding||"",
+    holding:r.holding_period||"",
     stage:r.stage||"",
     bottlenecks:r.bottlenecks||"",
     conditions:r.conditions||"",
-    comment:r.comment||""
+    comment:r.comments||""
   };
 }
 function appToDb(x){
   return {
     user_id:currentUser.id,
-    client:x.client,
-    relation:x.relation,
+    client_name:x.client,
+    relationship:x.relation,
     segment:x.segment,
     client_type:x.type,
     country:x.country,
@@ -254,11 +254,11 @@ function appToDb(x){
     probability:x.probability,
     liquidity:x.liquidity,
     deposit_date:x.depositDate||null,
-    holding:x.holding||null,
+    holding_period:x.holding||null,
     stage:x.stage||null,
     bottlenecks:x.bottlenecks||null,
     conditions:x.conditions||null,
-    comment:x.comment||null
+    comments:x.comment||null
   };
 }
 

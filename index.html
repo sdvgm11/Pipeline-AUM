@@ -66,6 +66,7 @@
       <input id="loginEmail" type="email" autocomplete="username" placeholder="Correo electrónico">
       <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Contraseña" style="margin-top:8px">
       <div class="auth-actions"><button class="btn primary" id="loginBtn">Entrar</button></div><div style="text-align:center;margin-top:12px"><button type="button" id="forgotPasswordBtn" style="background:none;border:0;color:#3bd6c6;cursor:pointer;font-size:13px">¿Olvidaste tu contraseña?</button></div>
+      <div style="text-align:center;margin-top:12px"><button class="btn" id="signupBtn" type="button">Crear nuevo usuario</button></div>
     </div>
     <div id="recoveryBox">
       <div class="auth-sub">Crea una contraseña nueva para recuperar tu acceso.</div>
@@ -544,6 +545,7 @@ fillSelect("country",COUNTRIES);
 fillSelect("fType",TYPES,"Todos");
 render();
 
+signupBtn.addEventListener("click",()=>alert("Botón funcionando"));
 loginBtn.addEventListener("click",login);forgotPasswordBtn.addEventListener("click",forgotPassword);
 savePasswordBtn.addEventListener("click",saveRecoveredPassword);
 logoutBtn.addEventListener("click",logoutApp);

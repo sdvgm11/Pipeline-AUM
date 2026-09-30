@@ -65,13 +65,10 @@
       <div class="auth-sub">Ingresa con el correo y la contraseña creados por el administrador.</div>
       <input id="loginEmail" type="email" autocomplete="username" placeholder="Correo electrónico">
       <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Contraseña" style="margin-top:8px">
-      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;cursor:pointer;">
-  <input type="checkbox" onclick="loginPassword.type=this.checked?'text':'password'">
-  Mostrar contraseña
-</label>
+      <label style="display:block;margin-top:8px;font-size:12px;cursor:pointer;"><input type="checkbox" style="width:auto;margin-right:6px;" onclick="loginPassword.type=this.checked?'text':'password'"> Mostrar contraseña</label>
       <div class="auth-actions"><button class="btn primary" id="loginBtn">Entrar</button></div><div style="text-align:center;margin-top:12px"><button type="button" id="forgotPasswordBtn" style="background:none;border:0;color:#3bd6c6;cursor:pointer;font-size:13px">¿Olvidaste tu contraseña?</button></div>
       <div style="text-align:center;margin-top:12px"><button class="btn" id="signupBtn" type="button">Crear nuevo usuario</button></div>
-    </div>id><div id="signupBox" style="display:none">
+    </div><div id="signupBox" style="display:none">
   <div class="auth-sub">Crea tu usuario para acceder al Pipeline & AUM.</div>
   <input id="signupEmail" type="email" autocomplete="email" placeholder="Correo electrónico">
   <input id="signupPassword" type="password" autocomplete="new-password" placeholder="Contraseña" style="margin-top:8px">

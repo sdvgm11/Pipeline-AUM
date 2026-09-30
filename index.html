@@ -67,7 +67,18 @@
       <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Contraseña" style="margin-top:8px">
       <div class="auth-actions"><button class="btn primary" id="loginBtn">Entrar</button></div><div style="text-align:center;margin-top:12px"><button type="button" id="forgotPasswordBtn" style="background:none;border:0;color:#3bd6c6;cursor:pointer;font-size:13px">¿Olvidaste tu contraseña?</button></div>
       <div style="text-align:center;margin-top:12px"><button class="btn" id="signupBtn" type="button">Crear nuevo usuario</button></div>
-    </div>
+    </div>id><div id="signupBox" style="display:none">
+  <div class="auth-sub">Crea tu usuario para acceder al Pipeline & AUM.</div>
+  <input id="signupEmail" type="email" autocomplete="email" placeholder="Correo electrónico">
+  <input id="signupPassword" type="password" autocomplete="new-password" placeholder="Contraseña" style="margin-top:8px">
+  <input id="signupConfirmPassword" type="password" autocomplete="new-password" placeholder="Repite la contraseña" style="margin-top:8px">
+  <div class="auth-actions">
+    <button class="btn primary" id="createUserBtn" type="button">Crear usuario</button>
+  </div>
+  <div style="text-align:center;margin-top:12px">
+    <button class="btn" id="backToLoginBtn" type="button">Volver al inicio</button>
+  </div>
+</div>
     <div id="recoveryBox">
       <div class="auth-sub">Crea una contraseña nueva para recuperar tu acceso.</div>
       <input id="newPassword" type="password" autocomplete="new-password" placeholder="Nueva contraseña">
@@ -354,7 +365,58 @@ async function saveRecoveredPassword(){
   finally{savePasswordBtn.disabled=false;savePasswordBtn.textContent="Guardar nueva contraseña"}
 }
 
-async function login(){
+async function createUser(){
+  authError.textContent="";
+
+  const email=signupEmail.value.trim();
+  const password=signupPassword.value;
+  const confirm=signupConfirmPassword.value;
+
+  if(!email || !password){
+    authError.textContent="Ingresa correo y contraseña.";
+    return;
+  }
+
+  if(password!==confirm){
+    authError.textContent="Las contraseñas no coinciden.";
+    return;
+  }
+
+  if(password.length<6){
+    authError.textContent="La contraseña debe tener al menos 6 caracteres.";
+    return;
+  }
+
+  createUserBtn.disabled=true;
+  createUserBtn.textContent="Creando...";
+
+  try{
+    const r=await authRequest("/auth/v1/signup",{
+      method:"POST",
+      body:JSON.stringify({email,password})
+    });
+
+    const payload=await r.json();
+
+    if(!r.ok){
+      throw new Error(payload.error_description||payload.msg||"No se pudo crear el usuario.");
+    }
+
+    signupEmail.value="";
+    signupPassword.value="";
+    signupConfirmPassword.value="";
+
+    signupBox.style.display="none";
+    loginBox.style.display="block";
+
+    authMessage.textContent="Usuario creado. Ya puedes iniciar sesión.";
+  }catch(e){
+    authError.textContent=e.message||"No se pudo crear el usuario.";
+  }finally{
+    createUserBtn.disabled=false;
+    createUserBtn.textContent="Crear usuario";
+  }
+}async function login(){
   authError.textContent="";
   const email=loginEmail.value.trim(),password=loginPassword.value;
   if(!email||!password){authError.textContent="Ingresa correo y contraseña.";return}
@@ -545,7 +607,9 @@ fillSelect("country",COUNTRIES);
 fillSelect("fType",TYPES,"Todos");
 render();
 
-signupBtn.addEventListener("click",()=>alert("Botón funcionando"));
+signupBtn.addEventListener("click",()=>{loginBox.style.display="none";signupBox.style.display="block";authError.textContent="";});
+backToLoginBtn.addEventListener("click",()=>{signupBox.style.display="none";loginBox.style.display="block";authError.textContent="";});
+createUserBtn.addEventListener("click",createUser);
 loginBtn.addEventListener("click",login);forgotPasswordBtn.addEventListener("click",forgotPassword);
 savePasswordBtn.addEventListener("click",saveRecoveredPassword);
 logoutBtn.addEventListener("click",logoutApp);
